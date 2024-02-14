@@ -1,6 +1,7 @@
 import React from 'react';
 import Dashboard from "././Component/Dashboard/Dashboard";
-import Upload from "././Component/Upload/Upload";
+
+import UploadImage from './Uploadimage';
 import { BrowserRouter as Router, Route, Routes}from 'react-router-dom';
 
 
@@ -10,7 +11,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route exact path="/" element=<Dashboard /> />
-        <Route exact path="/upload" element=<Upload /> />
+        <Route  path="/upload" element=<UploadImage /> />
         
       </Routes>
     </Router>

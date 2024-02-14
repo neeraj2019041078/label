@@ -1,6 +1,6 @@
 import React from 'react';
 import "./index.css";
-import Upload from './Component/Upload/Upload';
+
 import { useNavigate } from 'react-router-dom';
 
 const Card = ({ imageUrl, title, description, buttonText, deleteDataset,buttonGo }) => {

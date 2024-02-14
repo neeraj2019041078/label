@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Disclosure } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
-import {AnnotationLayer} from "react-image-annotation";
-
+import ImageAnnotator from "./ImageAnnotator";
 import "./Upload.css";
 
 const UploadImage = () => {
@@ -12,14 +11,27 @@ const UploadImage = () => {
     return storedImages ? JSON.parse(storedImages) : [];
   });
   const [isUploaded, setIsUploaded] = useState(false);
-  const [annotation,setAnnotation]= useState([]);
-
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState("");
+  const [annotations, setAnnotations] = useState([]);
+  const [selectedAnnotation, setSelectedAnnotation] = useState(null);
+  const [labelInput, setLabelInput] = useState("");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedImage.length > 0) {
+      handleImageSelection(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("neeraj_images", JSON.stringify(selectedImage));
+  }, [selectedImage]);
 
   const onSelectFile = (event) => {
     const selectedFiles = event.target.files;
     const selectedFilesArray = Array.from(selectedFiles);
-
 
     const readFiles = selectedFilesArray.map((file) => {
       return new Promise((resolve, reject) => {
@@ -30,9 +42,9 @@ const UploadImage = () => {
       });
     });
 
-  
     Promise.all(readFiles).then((dataURLs) => {
       setSelectedImage((prevImages) => [...prevImages, ...dataURLs]);
+      setSelectedImageIndex(null);
     });
   };
 
@@ -46,6 +58,38 @@ const UploadImage = () => {
       updatedImages.splice(index, 1);
       return updatedImages;
     });
+    if (selectedImageIndex === index) {
+      setSelectedImageIndex(null);
+    }
+  };
+
+  const handleImageSelection = (index) => {
+    setSelectedImageIndex(index);
+    setModalImage(selectedImage[index]);
+    setIsModalOpen(true);
+  };
+
+  const handleAnnotationSelection = (annotation) => {
+    setSelectedAnnotation(annotation);
+  };
+
+  const handleLabelInputChange = (event) => {
+    setLabelInput(event.target.value);
+  };
+
+  const handleAddLabel = () => {
+    if (selectedAnnotation && labelInput.trim() !== "") {
+      const updatedAnnotations = [
+        ...annotations,
+        { ...selectedAnnotation, data: { text: labelInput } },
+      ];
+      setAnnotations(updatedAnnotations);
+      setLabelInput("");
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -55,10 +99,6 @@ const UploadImage = () => {
   const openFilePicker = () => {
     fileInputRef.current.click();
   };
-
-  useEffect(() => {
-    localStorage.setItem("neeraj_images", JSON.stringify(selectedImage));
-  }, [selectedImage]);
 
   return (
     <>
@@ -108,17 +148,35 @@ const UploadImage = () => {
             Selected Images ({selectedImage.length})
           </div>
           {selectedImage.map((image, index) => (
-            <div className="image" key={index}>
+            <div
+              className={`image ${
+                selectedImageIndex === index ? "selected" : ""
+              }`}
+              key={index}
+              onClick={() => handleImageSelection(index)}
+            >
               <img src={image} alt={`Selected Image ${index}`} />
-              <AnnotationLayer
-                image={image}
-                annotations={annotations}
-                onChange={setAnnotations}
-                selector={{}}
-              />
               <button onClick={() => handleRemoveImage(index)}>D</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {isModalOpen && selectedImageIndex !== null && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={handleModalClose}>
+              &times;
+            </span>
+
+            <ImageAnnotator
+              image={selectedImage[selectedImageIndex]}
+              annotations={annotations}
+              handleAnnotationSelection={handleAnnotationSelection}
+              handleLabelInputChange={handleLabelInputChange}
+              handleAddLabel={handleAddLabel}
+            />
+          </div>
         </div>
       )}
     </>
